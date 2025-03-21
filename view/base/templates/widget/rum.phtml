@@ -1,0 +1,537 @@
+<?php
+    use Jajuma\PotRum\Block\PowerToys\RumDashboard;
+?>
+<?php /** @var RumDashboard $block */ ?>
+<?php
+    $kpiKeysSort = $block->getKpiKeysSort();
+    $baseValue = $block->getBaseValue();
+    $cardData = $block->getCardData();
+    $cardInfoCacheHits = $block->getCardInfoCacheHits();
+    $cardInfoErrorLog = $block->getCardInfoErrorLog();
+?>
+<div class="jajuma-pot-rum-wrapper">
+    <span class="powertoys-widget-title jajuma-pot-rum-title"><?= 'RUM Dashboard' ?></span>
+    <div class="jajuma-pot-rum-list-item">
+        <?php foreach($kpiKeysSort as $kpiKey): ?>
+            <?php
+                $kpiBaseValue = $baseValue[$kpiKey];
+                $kpiCardData = $cardData[$kpiKey];
+                $statusColors = '';
+                if ($kpiCardData['performance'] === 'good') {
+                    $statusColors = 'good';
+                } elseif ($kpiCardData['performance'] === 'poor') {
+                    $statusColors = 'poor';
+                } else {
+                    $statusColors = 'improvement';
+                }
+                $percentileValue = (float)($kpiCardData['percentile']);
+                $shortLabel = $kpiBaseValue['short_label'];
+                $label = $kpiBaseValue['label'];
+                $unit = $kpiBaseValue['unit'];
+                $percentileStr = $percentileValue . $unit;
+                $performance = $kpiCardData['performance'];
+                $performanceTitle = $performance === 'improve' ? __("Needs Improvement") : __(ucfirst($performance));
+                $changeStatus = $kpiCardData['change_status'];
+                $change = $kpiCardData['change'];
+            ?>
+            <div class="jajuma-pot-rum-item">
+                <div class="item-title">
+                    <div class="item-status">
+                        <div class="item-icon">
+                            <img src="<?= $block->getViewFileUrl('Jajuma_PotRum::images/icon-' . $kpiKey . '.svg'); ?>" alt="<?= $kpiKey; ?> icon" loading="lazy"/>
+                            <h3><?= $shortLabel; ?></h3>
+                        </div>
+                        <span class="<?= $statusColors; ?> item-performance">
+                            <?= $performanceTitle ?>
+                        </span>
+                    </div>
+                    <span class="item-label"><?= $label; ?></span>
+                </div>
+                <div class="item-description">
+                    <span class="percentile"><?= $percentileStr; ?></span>
+                    <div class="trend">
+                        <?php if ($changeStatus == 'equal'): ?>
+                            <span class="equal" data-tooltip-target="tooltip-status-<?= $kpiKey; ?>">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5"></path>
+                                </svg>
+                                <?= $change; ?>
+                            </span>
+                        <?php elseif ($changeStatus == 'down'): ?>
+                            <span class="down" data-tooltip-target="tooltip-status-<?= $kpiKey; ?>">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181">
+                                    </path>
+                                </svg>
+                                <?= $change; ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="up" data-tooltip-target="tooltip-status-<?= $kpiKey; ?>">
+                                <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M1 9.09185L5.81897 4.27288L8.89312 7.34703C9.78189 5.59518 11.248 4.20372 13.0439 3.40761L15 2.53663M15 2.53663L10.7593 0.908173M15 2.53663L13.3723 6.77732"
+                                        stroke="#0DCE6A" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                                <?= $change; ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="kpi-field <?= $kpiKey; ?>">
+                    <div class="cwv-score-wrapper">
+                        <span class="cwv-score-value" style="left: 75%; display: flex; position: relative; width: 0; justify-content: center; white-space: nowrap; font-weight: 700;"></span>
+                        <div class="cwv-score-bars" style="display: flex;">
+                            <span class="cwv-score-bar cwv-green" style="flex-grow: <?= $kpiCardData['good'] / 100 ?>; background-color: #0cce6a; border-top-left-radius: 8px; border-bottom-left-radius: 8px;">
+                                <div class="cwv-color" style="height: 8px; width: 100%;"></div>
+                            </span>
+                            <span class="cwv-score-bar cwv-orange" style="flex-grow: <?= $kpiCardData['improve'] / 100 ?>; background-color: #ffa400;">
+                                <div class="cwv-color" style="height: 8px; width: 100%;"></div>
+                            </span>
+                            <span class="cwv-score-bar cwv-red" style="flex-grow: <?= $kpiCardData['poor'] / 100 ?>; background-color: #ff4e43; border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
+                                <div class="cwv-color" style="height: 8px; width: 100%;"></div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        <div class="jajuma-pot-rum-item border-none">
+            <?php
+            $status = 'good';
+            if ($cardInfoCacheHits['28Day'] < 80 && $cardInfoCacheHits['28Day'] >= 60) {
+                $status = 'improve';
+            }
+            if ($cardInfoCacheHits['28Day'] < 60) {
+                $status = 'poor';
+            }
+            $trendClass = $cardInfoCacheHits['status'] === 'up' ? 'green' : 'red';
+            ?>
+            <div class="cache-hits-card <?= $status ?>">
+                <div class="title">
+                    <h3><?= __("Cache Hits Rate") ?></h3>
+                </div>
+                <span class="description"><?= $cardInfoCacheHits['28Day']; ?></span>
+                <?php if ($cardInfoCacheHits['status'] === 'up'): ?>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="<?= $trendClass ?>">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+                    </svg>
+                <?php else: ?>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="<?= $trendClass ?>">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181" />
+                    </svg>
+                <?php endif; ?>
+                <div class="trend <?= $trendClass ?>">
+                    <span class="change"><?= $cardInfoCacheHits['change'] ?></span>
+                    <span><?= __("compared to the previous 7 days") ?></span>
+                </div>
+            </div>
+        </div>
+        <div class="jajuma-pot-rum-item border-none">
+            <?php
+                $trendErrorClass = $cardInfoErrorLog['status'] === 'up' ? 'red' : 'green';
+            ?>
+            <div class="error-card <?= $trendErrorClass ?>">
+                <div class="title">
+                    <h3><?= __("Error Rate") ?></h3>
+                    <span class=""><?= $cardInfoErrorLog['new_error_last_7_day'] . " new error(s) in last 7 days" ?></span>
+                </div>
+                <span class="description"><?= $cardInfoErrorLog['28Day']; ?></span>
+                <?php if ($cardInfoErrorLog['status'] !== 'up'): ?>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181" />
+                    </svg>
+                <?php else: ?>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+                    </svg>
+                <?php endif; ?>
+                <div class="trend">
+                    <span class="change"><?= $cardInfoErrorLog['change'] ?></span>
+                    <span><?= __("compared to the previous 7 days") ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] {
+        position: relative;
+        max-height: 200px;
+        min-width: 300px;
+        max-width: 350px;
+        overflow: hidden;
+        background-color: #000;
+    }
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-wrapper {
+        height: 100%;
+    }
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-title {
+        background: #f5a75a;
+        color: #252525;
+        z-index: 1;
+        position: relative;
+    }
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item {
+        position: relative;
+        overflow-x: hidden;
+        overflow-y: auto;
+        height: calc(100% - 32px);
+        border-radius: 8px;
+        padding-right: 8px;
+        z-index: 1;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item::-webkit-scrollbar-track {
+        box-shadow: inset 0 0 5px grey;
+        border-radius: 5px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item::-webkit-scrollbar-thumb {
+        background: #fff;
+        border-radius: 3px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item::-webkit-scrollbar-thumb:hover {
+        background: #fff;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item {
+        margin-bottom: 10px;
+        background: #ffffffed;
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-status {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-status .item-icon {
+        display: inline-flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-status .item-icon h3 {
+        font-size: 24px;
+        line-height: 32px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-status .item-performance {
+        padding: 0 10px;
+        border-radius: 9999px;
+        font-size: 14px;
+        line-height: 32px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-status .item-performance.good {
+        --tw-bg-opacity: 1;
+        --tw-text-opacity: 1;
+        background-color: rgb(209 250 229 / var(--tw-bg-opacity));
+        color: rgb(16 185 129 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-status .item-performance.poor {
+        --tw-bg-opacity: 1;
+        --tw-text-opacity: 1;
+        color: rgb(240 82 82 / var(--tw-text-opacity));
+        background-color: rgb(253 232 232 / var(--tw-bg-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-status .item-performance.improvement {
+        --tw-bg-opacity: 1;
+        --tw-text-opacity: 1;
+        color: rgb(255 90 31 / var(--tw-text-opacity));
+        background-color: rgb(254 236 220 / var(--tw-bg-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-title .item-label {
+        font-weight: 600;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description {
+        display: flex; justify-content: space-between;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .percentile {
+        font-weight: 900;
+        font-size: 32px;
+        line-height: 36px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .trend {
+        gap: 1rem;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .trend span {
+        border-radius: 9999px;
+        gap: 0.5rem;
+        display: inline-flex;
+        padding: 0.625rem;
+        height: 3rem;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .trend span.equal {
+        --tw-text-opacity: 1;
+        --tw-bg-opacity: 1;
+        color: rgb(255 90 31 / var(--tw-text-opacity));
+        background-color: rgb(254 236 220 / var(--tw-bg-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .trend span.down {
+        --tw-text-opacity: 1;
+        --tw-bg-opacity: 1;
+        color: rgb(240 82 82 / var(--tw-text-opacity));
+        background-color: rgb(253 232 232 / var(--tw-bg-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .trend span.up {
+        --tw-text-opacity: 1;
+        --tw-bg-opacity: 1;
+        color: rgb(14 159 110 / var(--tw-text-opacity));
+        background-color: rgb(222 247 236 / var(--tw-bg-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .trend span svg {
+        min-width: 24px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .kpi-field .cwv-score-wrapper {
+        position: relative;
+        margin-top: 4px;
+        padding-right: 10px;
+        clear: both;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .item-description .kpi-field .cwv-score-wrapper .cwv-score-value:after {
+        background-image: url(<?= $block->getViewFileUrl("Jajuma_PotRum::images/pin.svg") ?>);
+        content: "";
+        width: 20px;
+        height: 24px;
+        position: absolute;
+        top: -12px;
+        background-repeat: no-repeat;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item.border-none {
+        padding: 0;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card {
+        position: relative;
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.good {
+        background-image: linear-gradient(to top right, var(--tw-gradient-stops));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        --tw-gradient-to: #34d399;
+        --tw-gradient-from: #d1fae5;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.improve {
+        background-image: linear-gradient(to top right, var(--tw-gradient-stops));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        --tw-gradient-to: #E3A008;
+        --tw-gradient-from: #FDF6B2;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.poor {
+        background-image: linear-gradient(to top right, var(--tw-gradient-stops));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        --tw-gradient-to: #F98080;
+        --tw-gradient-from: #FDE8E8;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card .title h3 {
+        margin-bottom: 5px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.good .title h3 {
+        --tw-text-opacity: 1;
+        color: rgb(6 95 70 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.improve .title h3 {
+        --tw-text-opacity: 1;
+        color: rgb(114 59 19 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.poor .title h3 {
+        --tw-text-opacity: 1;
+        color: rgb(155 28 28 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card .description {
+        font-weight: 700;
+        font-size: 35px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.good .description {
+        --tw-text-opacity: 1;
+        color: rgb(16 185 129 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.improve .description {
+        --tw-text-opacity: 1;
+        color: rgb(194 120 3 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card.poor .description {
+        --tw-text-opacity: 1;
+        color: rgb(240 82 82 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card .trend {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card .trend.red {
+        color: rgb(224 36 36 / 0.7);
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card .trend.green {
+        color: rgb(5 150 105 / 0.7);
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card .trend .change {
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card svg {
+        position: absolute;
+        height: 100%;
+        top: 0;
+        right: 0;
+        opacity: 0.1;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card svg.red {
+        --tw-text-opacity: 1;
+        color: rgb(249 128 128 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .cache-hits-card svg.green {
+        --tw-text-opacity: 1;
+        color: rgb(14 159 110 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card {
+        position: relative;
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card .title h3 {
+        margin-bottom: 5px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card .description {
+        font-weight: 700;
+        font-size: 35px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card svg {
+        position: absolute;
+        height: 100%;
+        top: 0;
+        right: 0;
+        opacity: 0.1;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card .trend {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card .trend .change {
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.green {
+        background-image: linear-gradient(to top right, var(--tw-gradient-stops));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        --tw-gradient-to: #34d399;
+        --tw-gradient-from: #d1fae5;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.green .title {
+        --tw-text-opacity: 1;
+        color: rgb(6 95 70 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.green .title h3 {
+        color: rgb(6 95 70 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.green .description {
+        --tw-text-opacity: 1;
+        color: rgb(16 185 129 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.green svg {
+        --tw-text-opacity: 1;
+        color: rgb(14 159 110 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.green .trend {
+        --tw-text-opacity: 1;
+        color: rgb(5 150 105 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.red {
+        background-image: linear-gradient(to top right, var(--tw-gradient-stops));
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        --tw-gradient-to: #F98080;
+        --tw-gradient-from: #FDE8E8;
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.red .title {
+        --tw-text-opacity: 1;
+        color: rgb(240 82 82 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.red .title h3 {
+        color: rgb(240 82 82 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.red .description {
+        --tw-text-opacity: 1;
+        color: rgb(240 82 82 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.red svg {
+        --tw-text-opacity: 1;
+        color: rgb(249 128 128 / var(--tw-text-opacity));
+    }
+
+    .powertoys-dashboard-widgets .widget-item[data-widget-id="pot_rum"] .jajuma-pot-rum-list-item .jajuma-pot-rum-item .error-card.red .trend {
+        --tw-text-opacity: 1;
+        color: rgb(240 82 82 / var(--tw-text-opacity));
+    }
+</style>
